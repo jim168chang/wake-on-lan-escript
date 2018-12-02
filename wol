@@ -1,0 +1,34 @@
+#!/usr/bin/env escript
+
+main(A) ->
+    %Check if input MAC address is valid
+    MacAddress = try
+        6 = length(A),  %Catch if there are not 6 arguments
+        [A0, A1, A2, A3, A4, A5] = A,
+        M0 = list_to_integer(A0, 16),   %Catch if A0 is not a hex number
+        M1 = list_to_integer(A1, 16),   %Catch if A1 is not a hex number
+        M2 = list_to_integer(A2, 16),   %Catch if A2 is not a hex number
+        M3 = list_to_integer(A3, 16),   %Catch if A3 is not a hex number
+        M4 = list_to_integer(A4, 16),   %Catch if A4 is not a hex number
+        M5 = list_to_integer(A5, 16),   %Catch if A5 is not a hex number
+        [M0, M1, M2, M3, M4, M5]
+    catch
+        _:_ ->
+            usage()
+    end,
+
+    %Constructing magic packet
+    Six255s = [255, 255, 255, 255, 255, 255],
+    MA4 = [MacAddress, MacAddress, MacAddress, MacAddress], %Tmp variable
+    MagicPacket = list_to_binary([Six255s, MA4, MA4, MA4, MA4]),
+    
+    %Sending magic packet
+    io:format("Before sending WOL magic packet...~n"),
+    {ok, S} = gen_udp:open(0, [{broadcast, true}]),
+    gen_udp:send(S, {255, 255, 255, 255}, 9, MagicPacket),
+    io:format("WOL magic packet has been sent for MAC address ~p!~n", [A]).
+
+usage() ->
+    io:format("usage: wol XX XX XX XX XX XX~n"),
+    io:format("note: Six MAC address hexadecimal numbers~n"),
+    halt(1).
