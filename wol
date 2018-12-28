@@ -1,19 +1,42 @@
 #!/usr/bin/env escript
 
 main(A) ->
-    %Check if input MAC address is valid
-    MacAddress = try
-        6 = length(A),  %Catch if there are not 6 arguments
-        [A0, A1, A2, A3, A4, A5] = A,
-        M0 = list_to_integer(A0, 16),   %Catch if A0 is not a hex number
-        M1 = list_to_integer(A1, 16),   %Catch if A1 is not a hex number
-        M2 = list_to_integer(A2, 16),   %Catch if A2 is not a hex number
-        M3 = list_to_integer(A3, 16),   %Catch if A3 is not a hex number
-        M4 = list_to_integer(A4, 16),   %Catch if A4 is not a hex number
-        M5 = list_to_integer(A5, 16),   %Catch if A5 is not a hex number
-        [M0, M1, M2, M3, M4, M5]
-    catch
-        _:_ ->
+    MacAddress = case length(A) of
+        1 ->    %wol XXXXXXXXXXXX
+            [MA] = A,
+            try
+                %Validate if MA is a hex number list and length is 12
+                12 = length(MA),
+                list_to_integer(MA, 16)
+            catch
+                _:_ ->
+                    usage()
+            end,
+            
+            %Validation is done, no exception will happen
+            [H0, L0, H1, L1, H2, L2, H3, L3, H4, L4, H5, L5] = MA,
+            I0 = list_to_integer([H0, L0], 16),
+            I1 = list_to_integer([H1, L1], 16),
+            I2 = list_to_integer([H2, L2], 16),
+            I3 = list_to_integer([H3, L3], 16),
+            I4 = list_to_integer([H4, L4], 16),
+            I5 = list_to_integer([H5, L5], 16),
+            <<I0, I1, I2, I3, I4, I5>>;
+        6 ->    %wol XX XX XX XX XX XX
+            try
+                [A0, A1, A2, A3, A4, A5] = A,
+                M0 = list_to_integer(A0, 16),   %Validate if A0 is a hex string
+                M1 = list_to_integer(A1, 16),   %Validate if A1 is a hex string
+                M2 = list_to_integer(A2, 16),   %Validate if A2 is a hex string
+                M3 = list_to_integer(A3, 16),   %Validate if A3 is a hex string
+                M4 = list_to_integer(A4, 16),   %Validate if A4 is a hex string
+                M5 = list_to_integer(A5, 16),   %Validate if A5 is a hex string
+                list_to_binary([M0, M1, M2, M3, M4, M5])
+            catch
+                _:_ ->
+                    usage()
+            end;
+        _ ->    %MAC address is invalid
             usage()
     end,
 
@@ -30,5 +53,6 @@ main(A) ->
 
 usage() ->
     io:format("usage: wol XX XX XX XX XX XX~n"),
-    io:format("note: Six MAC address hexadecimal numbers~n"),
+    io:format("   or: wol XXXXXXXXXXXX~n"),
+    io:format(" note: Six MAC address hexadecimal numbers~n"),
     halt(1).
