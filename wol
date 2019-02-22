@@ -31,7 +31,7 @@ main(A) ->
                 M3 = list_to_integer(A3, 16),   %Validate if A3 is a hex string
                 M4 = list_to_integer(A4, 16),   %Validate if A4 is a hex string
                 M5 = list_to_integer(A5, 16),   %Validate if A5 is a hex string
-                list_to_binary([M0, M1, M2, M3, M4, M5])
+                <<M0, M1, M2, M3, M4, M5>>
             catch
                 _:_ ->
                     usage()
@@ -41,7 +41,7 @@ main(A) ->
     end,
 
     %Constructing magic packet
-    Six255s = [255, 255, 255, 255, 255, 255],
+    Six255s = <<255, 255, 255, 255, 255, 255>>,
     MA4 = [MacAddress, MacAddress, MacAddress, MacAddress], %Tmp variable
     MagicPacket = list_to_binary([Six255s, MA4, MA4, MA4, MA4]),
     
