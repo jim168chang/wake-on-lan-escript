@@ -1,0 +1,39 @@
+#!/usr/bin/env escript
+
+hex2bin_acc([], R) ->
+    lists:reverse(R);
+hex2bin_acc(A, R) ->
+    [H, L | T] = A, %H: high byte; L: low byte
+    try
+        I = list_to_integer([H, L], 16),
+        hex2bin_acc(T, [I | R])
+    catch
+        _:_ ->
+            io:format("usage: wol XX XX XX XX XX XX~n"),
+            io:format("   or: wol XXXXXXXXXXXX~n"),
+            io:format(" note: Six MAC address hexadecimal numbers~n"),
+            halt(1)
+    end.
+
+hex2bin(A) ->
+    hex2bin_acc(A, []).
+
+'checkNTransformMA!'(A) ->
+    list_to_binary(hex2bin(A)).
+
+%args: "ABCDEF123456" or "AB", "CD", "EF", "12", "34", "56". Without '[' and ']'
+main(A) ->
+    MacAddress = 'checkNTransformMA!'(lists:concat(A)),
+
+    %Constructing magic packet
+    Six255s = <<255, 255, 255, 255, 255, 255>>,
+    MA4 = [MacAddress, MacAddress, MacAddress, MacAddress], %Tmp variable
+    MagicPacket = list_to_binary([Six255s, MA4, MA4, MA4, MA4]),
+    
+    %Sending magic packet
+    io:format("Before sending WOL magic packet...~n"),
+    {ok, S} = gen_udp:open(0, [{broadcast, true}]),
+    gen_udp:send(S, {255, 255, 255, 255}, 9, MagicPacket),
+    io:format("WOL magic packet has been sent for MAC address ~p!~n", [A]).
+
+
